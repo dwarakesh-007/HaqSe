@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { loadLegalContext } from "@/lib/legal";
 import { buildSystemPrompt } from "@/lib/prompt";
-import { askModel, type ChatMessage } from "@/lib/ai";
+import { streamModel, type ChatMessage } from "@/lib/ai";
+
+export const maxDuration = 60;
 import { STATES } from "@/lib/areas";
 
 const LANGUAGES: Record<string, string> = {
@@ -36,11 +38,13 @@ export async function POST(req: Request) {
       language: LANGUAGES[language] ?? "English",
     });
 
-    const reply = await askModel(
+    const stream = await streamModel(
       system,
       messages.map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }))
     );
-    return NextResponse.json({ reply });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
+    });
   } catch (err) {
     console.error(err);
     const message = err instanceof Error ? err.message : "Something went wrong.";

@@ -47,9 +47,25 @@ function Chat() {
           messages: next.map(({ role, content }) => ({ role, content })),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong.");
-      const { message, document } = extractDocument(data.reply);
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Something went wrong.");
+      }
+
+      // Show the answer word by word as it arrives.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        reply += decoder.decode(value, { stream: true });
+        const visible = reply.split("<<<DOCUMENT")[0];
+        setLoading(false);
+        setMessages([...next, { role: "assistant", content: visible }]);
+      }
+      if (!reply.trim()) throw new Error("No answer came back. Please try again.");
+      const { message, document } = extractDocument(reply);
       setMessages([...next, { role: "assistant", content: message, document }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
