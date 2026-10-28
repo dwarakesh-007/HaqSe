@@ -62,3 +62,31 @@ No fee for complaints up to Rs 5 lakh. Small fees above that. Check the current 
 - Builder or real-estate cases with large amounts
 - When the company has filed a case against the user
 Point the user to the District Legal Services Authority (DLSA) for free legal aid.
+
+## What happens at the Consumer Commission (court walkthrough)
+1. **You file the complaint** (online on e-Daakhil or in person). Attach your evidence.
+2. **Admission:** the commission checks that the complaint is in order and accepts it.
+3. **Notice to the company:** the commission sends them your complaint. They get 30 days to reply (the commission can allow 15 more).
+4. **Evidence:** both sides submit their evidence, usually as written affidavits with documents.
+5. **Hearing and arguments:** you explain your case. You can argue it yourself; a lawyer is not required.
+6. **Order:** the commission decides. It can order a refund, replacement, repair, compensation and costs.
+7. **Appeal:** if either side disagrees, they can appeal to the State Commission within 45 days.
+
+The law aims to decide cases in about 3 months (5 if product testing is needed), but in practice it often takes longer. The commission may also suggest mediation to settle faster.
+
+What to carry: copies of the complaint, all evidence, an ID, and notes of what you want to say.
+
+## Case strength check
+Strong signs:
+- You have the bill or order proof and payment proof
+- You have clear evidence of the problem (photos, video, expert report)
+- You complained to the company in writing and kept a copy
+- You are within the 2-year time limit
+- The company's reply (or silence) is on record
+
+Weak signs (and how to fix them):
+- No written complaint to the company yet → send one now and wait 15 days
+- No bill → look for the order email, bank statement or UPI record
+- Problem caused by misuse, or warranty clearly expired → case is weak
+- More than 2 years have passed → usually too late, unless there is a good reason for the delay
+- Bought for business/resale → may not count as a "consumer"

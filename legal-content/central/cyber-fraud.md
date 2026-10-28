@@ -42,3 +42,26 @@ The first few hours matter most. The faster you report, the better the chance of
 - Sextortion or leaked private photos (point to cybercrime.gov.in "women/child related crime" section and police)
 - The user is accused of a crime
 Point the user to the police and to the District Legal Services Authority (DLSA) for free legal aid.
+
+## What happens after you report (court walkthrough)
+Cyber fraud is a crime, so the case is run by the police and the government, not by you. You are the complainant and a witness.
+1. **Report:** 1930 and cybercrime.gov.in. The money may be frozen in the receiving accounts.
+2. **FIR:** the police register a case. Ask for a copy of the FIR; it is your right and it is free.
+3. **Investigation:** police trace the accounts and phone numbers. This can take weeks or months.
+4. **Getting frozen money back:** the court (usually the magistrate) can order the bank to release frozen money to you. The police or a free legal aid lawyer can help you apply.
+5. **Trial:** if the fraudster is caught, the police file a chargesheet and the case goes to trial. You may be called to give your statement.
+
+You do not need a private lawyer for most of this. Free legal aid (DLSA) can help with the release application.
+
+## Case strength check
+Strong signs:
+- Reported to 1930 within a few hours
+- Have the transaction ID / UTR, date and time
+- Have screenshots of chats, calls, SMS or the fake app
+- Bank informed in writing quickly
+
+Weak signs (and how to fix them):
+- Reported very late → report anyway; late reports can still be traced
+- Paid in cash or crypto → harder to trace; still report it
+- Shared OTP or PIN yourself → recovery from the bank is harder, but the fraudster still committed a crime; report it
+- Deleted the chats → check the other device, cloud backup, or bank SMS

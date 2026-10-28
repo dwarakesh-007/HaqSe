@@ -10,7 +10,8 @@ Tell HaqSe your problem in your own words (type or speak). It:
 2. Explains your rights in plain words
 3. Tells you exactly what to do next
 4. Writes the letter or complaint for you, ready to download as a PDF
-5. Points you to free legal aid when a case is too serious for an app
+5. Walks you through what happens in court, and checks how strong your case is
+6. Points you to free legal aid when a case is too serious for an app
 
 ## What it covers (Version 1)
 

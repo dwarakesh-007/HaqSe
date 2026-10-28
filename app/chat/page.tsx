@@ -22,7 +22,9 @@ function Chat() {
   const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages, loading]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   if (!area) return <p>Unknown topic. <a href="/">Go back</a></p>;
 
@@ -86,6 +88,17 @@ function Chat() {
         {error && <div className="error">{error}</div>}
         <div ref={endRef} />
       </div>
+
+      {messages.length > 0 && !loading && (
+        <div className="quick">
+          <button type="button" onClick={() => send("How strong is my case? Do I have a real chance?")}>
+            ⚖️ Check my case strength
+          </button>
+          <button type="button" onClick={() => send("What will happen if I go to court? Walk me through it.")}>
+            🏛️ What happens in court?
+          </button>
+        </div>
+      )}
 
       <form
         className="composer"

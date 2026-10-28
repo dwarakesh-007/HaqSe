@@ -8,6 +8,8 @@
 - [x] Document drafting with PDF download
 - [x] Voice input (browser speech recognition)
 - [x] "Get human help" safety line for serious cases
+- [x] Court walkthrough for each area
+- [x] Case strength check (strong / medium / weak, with how to fix weak points)
 - [ ] Review all legal content with a lawyer or law student
 - [ ] Verify Telangana and Andhra Pradesh state details
 - [ ] Telugu / Hindi font support in PDFs (add a Noto Sans font to jsPDF)
