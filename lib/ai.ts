@@ -3,7 +3,19 @@
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 const API = "https://generativelanguage.googleapis.com/v1beta";
-const TIMEOUT_MS = 90_000;
+const FIRST_RESPONSE_TIMEOUT_MS = 60_000; // how long to wait for Google to start answering
+const IDLE_TIMEOUT_MS = 60_000; // how long to wait between chunks once it has started
+
+const log = (...args: unknown[]) => console.log("[HaqSe AI]", ...args);
+
+function friendly(err: unknown, step: string): Error {
+  const e = err as { name?: string; message?: string; cause?: { code?: string; message?: string } };
+  if (e?.name === "TimeoutError" || e?.name === "AbortError") {
+    return new Error(`Google didn't respond in time (${step}). Check your internet and try again.`);
+  }
+  const code = e?.cause?.code ? ` [${e.cause.code}]` : "";
+  return new Error(`Couldn't reach Google (${step})${code}: ${e?.cause?.message ?? e?.message ?? "unknown error"}`);
+}
 
 // Google retires model names over time. If GEMINI_MODEL isn't set (or stops working),
 // we ask Google which models this key can use and pick the newest stable "flash" one.
@@ -11,10 +23,17 @@ let cachedModel: string | null = null;
 
 async function pickModel(key: string): Promise<string> {
   if (cachedModel) return cachedModel;
-  const res = await fetch(`${API}/models?pageSize=1000`, {
-    headers: { "x-goog-api-key": key },
-    signal: AbortSignal.timeout(20_000),
-  });
+  const t = Date.now();
+  log("finding an available model…");
+  let res: Response;
+  try {
+    res = await fetch(`${API}/models?pageSize=1000`, {
+      headers: { "x-goog-api-key": key },
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    throw friendly(err, "finding a model");
+  }
   if (!res.ok) throw new Error(`Could not list AI models (${res.status}): ${await res.text()}`);
   const data = (await res.json()) as {
     models?: { name: string; supportedGenerationMethods?: string[] }[];
@@ -34,6 +53,7 @@ async function pickModel(key: string): Promise<string> {
       .sort((a, b) => version(b) - version(a))[0];
 
   if (!best) throw new Error("No usable Gemini model found for this API key.");
+  log(`using ${best} (took ${Date.now() - t} ms)`);
   cachedModel = best;
   return best;
 }
@@ -45,25 +65,41 @@ const THINKING_OPTIONS: (Record<string, unknown> | undefined)[] = [
   { thinkingBudget: 0 }, // Gemini 2.5
   undefined, // models without thinking
 ];
+let workingThinking: number | null = null; // remember which option worked
 
 async function startStream(model: string, key: string, system: string, messages: ChatMessage[]) {
+  const options = workingThinking === null ? THINKING_OPTIONS.map((_, i) => i) : [workingThinking];
   let last: Response | undefined;
-  for (const thinkingConfig of THINKING_OPTIONS) {
-    last = await fetch(`${API}/models/${model}:streamGenerateContent?alt=sse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: messages.map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-        generationConfig: { temperature: 0.3, ...(thinkingConfig ? { thinkingConfig } : {}) },
-      }),
-    });
+  for (const i of options) {
+    const thinkingConfig = THINKING_OPTIONS[i];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), FIRST_RESPONSE_TIMEOUT_MS);
+    const t = Date.now();
+    try {
+      last = await fetch(`${API}/models/${model}:streamGenerateContent?alt=sse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: messages.map((m) => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          })),
+          generationConfig: { temperature: 0.3, ...(thinkingConfig ? { thinkingConfig } : {}) },
+        }),
+      });
+    } catch (err) {
+      throw friendly(err, "asking the AI");
+    } finally {
+      clearTimeout(timer);
+    }
+    log(`${model} replied ${last.status} in ${Date.now() - t} ms (thinking: ${JSON.stringify(thinkingConfig ?? "default")})`);
     // 400 means this model doesn't accept that thinking setting: try the next one.
-    if (last.status !== 400) return last;
+    if (last.status !== 400) {
+      if (last.ok) workingThinking = i;
+      return last;
+    }
   }
   return last!;
 }
@@ -81,6 +117,7 @@ export async function streamModel(system: string, messages: ChatMessage[]): Prom
   // The chosen model was retired: find a current one and try once more.
   if (res.status === 404) {
     cachedModel = null;
+    workingThinking = null;
     model = await pickModel(key);
     res = await startStream(model, key, system, messages);
   }
@@ -94,26 +131,40 @@ export async function streamModel(system: string, messages: ChatMessage[]): Prom
   const reader = res.body.getReader();
   let buffer = "";
 
+  const readWithIdleTimeout = () =>
+    Promise.race([
+      reader.read(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Google stopped sending the answer midway. Please try again.")), IDLE_TIMEOUT_MS)
+      ),
+    ]);
+
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) {
-        controller.close();
-        return;
-      }
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data:")) continue;
-        try {
-          const json = JSON.parse(line.slice(5));
-          const parts: { text?: string; thought?: boolean }[] = json?.candidates?.[0]?.content?.parts ?? [];
-          const text = parts.filter((p) => !p.thought).map((p) => p.text ?? "").join("");
-          if (text) controller.enqueue(encoder.encode(text));
-        } catch {
-          // ignore partial or non-JSON lines
+      try {
+        const { done, value } = await readWithIdleTimeout();
+        if (done) {
+          controller.close();
+          return;
         }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          try {
+            const json = JSON.parse(line.slice(5));
+            const parts: { text?: string; thought?: boolean }[] = json?.candidates?.[0]?.content?.parts ?? [];
+            const text = parts.filter((p) => !p.thought).map((p) => p.text ?? "").join("");
+            if (text) controller.enqueue(encoder.encode(text));
+          } catch {
+            // ignore partial or non-JSON lines
+          }
+        }
+      } catch (err) {
+        reader.cancel().catch(() => {});
+        controller.enqueue(encoder.encode(`\n\n⚠️ ${(err as Error).message}`));
+        controller.close();
       }
     },
     cancel() {
