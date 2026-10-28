@@ -33,8 +33,18 @@ export default function VoiceButton({ lang, onText }: { lang: string; onText: (t
   }
 
   return (
-    <button type="button" className={`mic ${listening ? "on" : ""}`} onClick={start} aria-label="Speak">
-      {listening ? "Listening…" : "🎤"}
+    <button
+      type="button"
+      className={`mic ${listening ? "on" : ""}`}
+      onClick={start}
+      aria-label={listening ? "Listening" : "Speak instead of typing"}
+      title={listening ? "Listening…" : "Speak"}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5.5 11a6.5 6.5 0 0 0 13 0" />
+        <path d="M12 17.5V21" />
+      </svg>
     </button>
   );
 }

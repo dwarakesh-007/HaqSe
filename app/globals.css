@@ -198,8 +198,12 @@ h2 { font-size: var(--step-2); font-weight: 700; font-stretch: 108%; letter-spac
 .composer button { min-height: 44px; border-radius: 10px; border: 0; cursor: pointer; }
 .composer .send { background: var(--ink); color: #fff; padding: 0 18px; font-weight: 600; }
 .composer .send:disabled { opacity: 0.35; cursor: default; }
-.composer .mic { background: var(--tint); padding: 0 12px; }
-.composer .mic.on { background: var(--stamp); color: #fff; }
+.composer .mic {
+  background: transparent; color: var(--slate); width: 44px; padding: 0; display: grid; place-items: center; border-radius: 50%;
+}
+.composer .mic:hover { color: var(--ink); background: var(--tint); }
+.composer .mic.on { color: #fff; background: var(--stamp); animation: pulse 1.4s infinite ease-in-out; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(179, 38, 30, 0.35); } 50% { box-shadow: 0 0 0 7px rgba(179, 38, 30, 0); } }
 
 .footer { max-width: 720px; margin: 0 auto; padding: 18px 16px 26px; color: var(--slate); font-size: 0.8rem; }
 .footer p { margin: 0; border-top: 1px solid var(--rule); padding-top: 14px; }
