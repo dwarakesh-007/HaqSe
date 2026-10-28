@@ -110,7 +110,7 @@ function Chat() {
             {m.document && (
               <figure className="sheet">
                 <div className="sheet-band" aria-hidden>
-                  <span>Draft letter</span>
+                  <span>Your letter</span>
                 </div>
                 <span className="seal" aria-hidden>
                   Draft
