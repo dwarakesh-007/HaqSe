@@ -5,13 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { getArea, STATES } from "@/lib/areas";
 import { downloadPdf, extractDocument } from "@/lib/pdf";
 import VoiceButton from "@/components/VoiceButton";
+import Markdown from "@/components/Markdown";
 
-// Show **bold** text from the AI as real bold.
-function renderBold(text: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part
-  );
-}
+const QUICK = [
+  { label: "Check my case strength", text: "How strong is my case? Do I have a real chance?" },
+  { label: "What happens in court?", text: "What will happen if I go to court? Walk me through it." },
+  { label: "Write my letter", text: "Please write the complaint letter for me now with the details I gave." },
+];
 
 type Msg = { role: "user" | "assistant"; content: string; document?: string };
 
@@ -84,69 +84,100 @@ function Chat() {
   return (
     <div className="chat">
       <div className="chat-head">
-        <a href="/">← Back</a>
-        <span>
-          {area.emoji} {area.title} · {stateName}
-        </span>
+        <a href="/" className="back">
+          ‹ Back
+        </a>
+        <div className="chat-title">
+          <strong>
+            <span aria-hidden>{area.emoji}</span> {area.title}
+          </strong>
+          <span>{stateName}</span>
+        </div>
       </div>
 
-      <div className="messages">
+      <div className="messages" aria-live="polite">
         {messages.length === 0 && (
-          <div className="bubble assistant">
-            Hi! Tell me what happened, in your own words. For example: &ldquo;{area.example}&rdquo;
+          <div className="msg assistant intro">
+            <p>Tell me what happened, in your own words. Don&rsquo;t worry about legal terms.</p>
+            <button type="button" className="example" onClick={() => setInput(area.example)}>
+              For example: &ldquo;{area.example}&rdquo;
+            </button>
           </div>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={`bubble ${m.role}`}>
-            <div className="text">{renderBold(m.content)}</div>
+          <div key={i} className={`msg ${m.role}`}>
+            {m.role === "assistant" ? <Markdown text={m.content} /> : <p>{m.content}</p>}
             {m.document && (
-              <div className="doc">
+              <figure className="sheet">
+                <div className="sheet-band" aria-hidden>
+                  <span>Draft letter</span>
+                </div>
+                <span className="seal" aria-hidden>
+                  Draft
+                </span>
                 <pre>{m.document}</pre>
-                <button onClick={() => downloadPdf(m.document!, `haqse-${areaId}.pdf`)}>Download as PDF</button>
-              </div>
+                <figcaption>
+                  <span>Fill in anything in [brackets] before you send it.</span>
+                  <button type="button" onClick={() => downloadPdf(m.document!, `haqse-${areaId}.pdf`)}>
+                    Download PDF
+                  </button>
+                </figcaption>
+              </figure>
             )}
           </div>
         ))}
-        {loading && <div className="bubble assistant typing">Thinking…</div>}
-        {error && <div className="error">{error}</div>}
+        {loading && (
+          <div className="msg assistant typing" aria-label="HaqSe is writing">
+            <i />
+            <i />
+            <i />
+          </div>
+        )}
+        {error && (
+          <div className="error" role="alert">
+            {error}
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
-      {messages.length > 0 && !loading && (
-        <div className="quick">
-          <button type="button" onClick={() => send("How strong is my case? Do I have a real chance?")}>
-            ⚖️ Check my case strength
-          </button>
-          <button type="button" onClick={() => send("What will happen if I go to court? Walk me through it.")}>
-            🏛️ What happens in court?
-          </button>
-        </div>
-      )}
+      <div className="dock">
+        {messages.length > 0 && !loading && (
+          <div className="quick">
+            {QUICK.map((q) => (
+              <button key={q.label} type="button" onClick={() => send(q.text)}>
+                {q.label}
+              </button>
+            ))}
+          </div>
+        )}
 
-      <form
-        className="composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-      >
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your problem here…"
-          rows={2}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send(input);
-            }
+        <form
+          className="composer"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
           }}
-        />
-        <VoiceButton lang={lang} onText={(t) => setInput((v) => (v ? v + " " : "") + t)} />
-        <button type="submit" disabled={loading || !input.trim()}>
-          Send
-        </button>
-      </form>
+        >
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={messages.length ? "Reply here…" : "Describe your problem…"}
+            aria-label="Your message"
+            rows={2}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send(input);
+              }
+            }}
+          />
+          <VoiceButton lang={lang} onText={(t) => setInput((v) => (v ? v + " " : "") + t)} />
+          <button type="submit" className="send" disabled={loading || !input.trim()}>
+            Send
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
