@@ -1,0 +1,25 @@
+{
+  "state": "Telangana",
+  "code": "TG",
+  "status": "draft - every value here must be checked before launch",
+  "languages": ["te", "en", "hi", "ur"],
+  "freeLegalAid": {
+    "name": "Telangana State Legal Services Authority (TSLSA)",
+    "note": "Each district has a District Legal Services Authority (DLSA) that gives free legal aid."
+  },
+  "consumer": {
+    "stateCommission": "Telangana State Consumer Disputes Redressal Commission, Hyderabad",
+    "note": "Each district has a District Consumer Commission."
+  },
+  "cyberFraud": {
+    "helpline": "1930",
+    "localPolice": "Telangana Cyber Security Bureau and the cyber crime police stations of Hyderabad, Cyberabad and Rachakonda commissionerates",
+    "note": "Also dial 100 in an emergency."
+  },
+  "rti": {
+    "fee": "Rs 10",
+    "paymentMethods": ["Cash with receipt", "Demand draft", "Indian Postal Order"],
+    "informationCommission": "Telangana State Information Commission",
+    "note": "Check the current fee and accepted payment methods with the department before launch."
+  }
+}

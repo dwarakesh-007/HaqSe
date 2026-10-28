@@ -1,0 +1,25 @@
+{
+  "state": "Andhra Pradesh",
+  "code": "AP",
+  "status": "draft - every value here must be checked before launch",
+  "languages": ["te", "en", "hi", "ur"],
+  "freeLegalAid": {
+    "name": "Andhra Pradesh State Legal Services Authority (APSLSA)",
+    "note": "Each district has a District Legal Services Authority (DLSA) that gives free legal aid."
+  },
+  "consumer": {
+    "stateCommission": "Andhra Pradesh State Consumer Disputes Redressal Commission",
+    "note": "Each district has a District Consumer Commission."
+  },
+  "cyberFraud": {
+    "helpline": "1930",
+    "localPolice": "AP Police cyber crime wing and district cyber cells",
+    "note": "Also dial 100 in an emergency."
+  },
+  "rti": {
+    "fee": "Rs 10",
+    "paymentMethods": ["Cash with receipt", "Demand draft", "Indian Postal Order"],
+    "informationCommission": "Andhra Pradesh Information Commission",
+    "note": "Check the current fee and accepted payment methods with the department before launch."
+  }
+}
