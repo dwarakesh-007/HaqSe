@@ -6,6 +6,13 @@ import { getArea, STATES } from "@/lib/areas";
 import { downloadPdf, extractDocument } from "@/lib/pdf";
 import VoiceButton from "@/components/VoiceButton";
 
+// Show **bold** text from the AI as real bold.
+function renderBold(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part
+  );
+}
+
 type Msg = { role: "user" | "assistant"; content: string; document?: string };
 
 function Chat() {
@@ -91,7 +98,7 @@ function Chat() {
         )}
         {messages.map((m, i) => (
           <div key={i} className={`bubble ${m.role}`}>
-            <div className="text">{m.content}</div>
+            <div className="text">{renderBold(m.content)}</div>
             {m.document && (
               <div className="doc">
                 <pre>{m.document}</pre>

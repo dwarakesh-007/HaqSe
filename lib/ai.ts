@@ -3,7 +3,7 @@
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 const API = "https://generativelanguage.googleapis.com/v1beta";
-const FIRST_RESPONSE_TIMEOUT_MS = 60_000; // how long to wait for Google to start answering
+const FIRST_RESPONSE_TIMEOUT_MS = 30_000; // how long to wait for Google to start answering
 const IDLE_TIMEOUT_MS = 60_000; // how long to wait between chunks once it has started
 
 const log = (...args: unknown[]) => console.log("[HaqSe AI]", ...args);
@@ -17,14 +17,16 @@ function friendly(err: unknown, step: string): Error {
   return new Error(`Couldn't reach Google (${step})${code}: ${e?.cause?.message ?? e?.message ?? "unknown error"}`);
 }
 
-// Google retires model names over time. If GEMINI_MODEL isn't set (or stops working),
-// we ask Google which models this key can use and pick the newest stable "flash" one.
-let cachedModel: string | null = null;
+// Google retires model names over time and the newest model is sometimes overloaded.
+// So we keep a list of candidate models (newest first) and fall back down the list
+// whenever one is retired (404), busy (503) or rate-limited (429).
+let candidates: string[] | null = null;
+let preferred: string | null = null; // the last model that worked
 
-async function pickModel(key: string): Promise<string> {
-  if (cachedModel) return cachedModel;
+async function getCandidates(key: string): Promise<string[]> {
+  if (candidates) return candidates;
   const t = Date.now();
-  log("finding an available model…");
+  log("finding available models…");
   let res: Response;
   try {
     res = await fetch(`${API}/models?pageSize=1000`, {
@@ -38,24 +40,17 @@ async function pickModel(key: string): Promise<string> {
   const data = (await res.json()) as {
     models?: { name: string; supportedGenerationMethods?: string[] }[];
   };
-
   const usable = (data.models ?? [])
     .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
     .map((m) => m.name.replace(/^models\//, ""));
 
-  const isFlash = (n: string) => /^gemini-[\d.]+-flash$/.test(n); // stable names only, e.g. gemini-2.5-flash
   const version = (n: string) => parseFloat(n.match(/gemini-([\d.]+)/)?.[1] ?? "0");
-
-  const best =
-    usable.filter(isFlash).sort((a, b) => version(b) - version(a))[0] ??
-    usable
-      .filter((n) => n.includes("flash") && !/(image|tts|audio|live|embedding)/.test(n))
-      .sort((a, b) => version(b) - version(a))[0];
-
-  if (!best) throw new Error("No usable Gemini model found for this API key.");
-  log(`using ${best} (took ${Date.now() - t} ms)`);
-  cachedModel = best;
-  return best;
+  const stableFlash = usable.filter((n) => /^gemini-[\d.]+-flash$/.test(n)).sort((a, b) => version(b) - version(a));
+  const extras = ["gemini-flash-latest"].filter((n) => usable.includes(n));
+  candidates = [...stableFlash, ...extras];
+  if (candidates.length === 0) throw new Error("No usable Gemini model found for this API key.");
+  log(`candidates: ${candidates.join(", ")} (took ${Date.now() - t} ms)`);
+  return candidates;
 }
 
 // Newer models "think" before answering, which is slow. Ask for light thinking.
@@ -65,10 +60,11 @@ const THINKING_OPTIONS: (Record<string, unknown> | undefined)[] = [
   { thinkingBudget: 0 }, // Gemini 2.5
   undefined, // models without thinking
 ];
-let workingThinking: number | null = null; // remember which option worked
+const workingThinking = new Map<string, number>(); // which thinking option each model accepts
 
 async function startStream(model: string, key: string, system: string, messages: ChatMessage[]) {
-  const options = workingThinking === null ? THINKING_OPTIONS.map((_, i) => i) : [workingThinking];
+  const known = workingThinking.get(model);
+  const options = known === undefined ? THINKING_OPTIONS.map((_, i) => i) : [known];
   let last: Response | undefined;
   for (const i of options) {
     const thinkingConfig = THINKING_OPTIONS[i];
@@ -97,7 +93,7 @@ async function startStream(model: string, key: string, system: string, messages:
     log(`${model} replied ${last.status} in ${Date.now() - t} ms (thinking: ${JSON.stringify(thinkingConfig ?? "default")})`);
     // 400 means this model doesn't accept that thinking setting: try the next one.
     if (last.status !== 400) {
-      if (last.ok) workingThinking = i;
+      if (last.ok) workingThinking.set(model, i);
       return last;
     }
   }
@@ -111,19 +107,36 @@ export async function streamModel(system: string, messages: ChatMessage[]): Prom
     throw new Error("GEMINI_API_KEY is not set. Copy .env.example to .env.local and add your key.");
   }
 
-  let model = process.env.GEMINI_MODEL || (await pickModel(key));
-  let res = await startStream(model, key, system, messages);
+  const list = await getCandidates(key);
+  const order = [
+    ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
+    ...(preferred ? [preferred] : []),
+    ...list,
+  ].filter((m, i, a) => a.indexOf(m) === i);
 
-  // The chosen model was retired: find a current one and try once more.
-  if (res.status === 404) {
-    cachedModel = null;
-    workingThinking = null;
-    model = await pickModel(key);
-    res = await startStream(model, key, system, messages);
+  let res: Response | undefined;
+  let lastError = "";
+  for (const model of order) {
+    try {
+      res = await startStream(model, key, system, messages);
+    } catch (err) {
+      lastError = (err as Error).message;
+      log(`${model} failed: ${lastError}`);
+      continue;
+    }
+    if (res.ok && res.body) {
+      preferred = model;
+      break;
+    }
+    lastError = `${model} (${res.status}): ${(await res.text()).slice(0, 200)}`;
+    log(`skipping ${lastError}`);
+    if (![404, 429, 500, 503].includes(res.status)) break; // a real error (e.g. bad key): stop
+    if (preferred === model) preferred = null;
+    res = undefined;
   }
 
-  if (!res.ok || !res.body) {
-    throw new Error(`AI request failed (${res.status}): ${await res.text()}`);
+  if (!res || !res.ok || !res.body) {
+    throw new Error(`The AI is busy right now. Please try again in a minute. (${lastError})`);
   }
 
   const encoder = new TextEncoder();
