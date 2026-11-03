@@ -1,17 +1,21 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getArea, STATES } from "@/lib/areas";
 import { downloadPdf, extractDocument } from "@/lib/pdf";
 import { T, toLang } from "@/lib/i18n";
 import VoiceButton from "@/components/VoiceButton";
 import Markdown from "@/components/Markdown";
+import { AREA_ICONS } from "@/components/Icons";
 
 type Msg = { role: "user" | "assistant"; content: string; document?: string };
 
 function Chat() {
   const params = useSearchParams();
+  const router = useRouter();
+  const firstQ = params.get("q");
+  const sentFirst = useRef(false);
   const areaId = params.get("area") ?? "consumer";
   const state = params.get("state") ?? "telangana";
   const lang = toLang(params.get("lang"));
@@ -42,6 +46,17 @@ function Chat() {
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }, [input]);
 
+  // A problem typed on the home page is sent right away, once.
+  useEffect(() => {
+    if (!firstQ || sentFirst.current || !area) return;
+    sentFirst.current = true;
+    const p = new URLSearchParams(params.toString());
+    p.delete("q");
+    router.replace(`/chat?${p.toString()}`);
+    send(firstQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!area) {
     return (
       <main className="chat">
@@ -52,6 +67,7 @@ function Chat() {
     );
   }
   const areaText = t.areas[area.id];
+  const AreaIcon = AREA_ICONS[area.id];
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -113,7 +129,7 @@ function Chat() {
         </a>
         <div className="chat-title">
           <strong>
-            <span aria-hidden>{area.emoji}</span> {areaText.title}
+            <AreaIcon size={20} /> {areaText.title}
           </strong>
           <span>{stateName}</span>
         </div>

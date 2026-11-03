@@ -16,6 +16,13 @@ export function toLang(v: string | null | undefined): Lang {
 
 type Strings = {
   tagline: string;
+  askLabel: string;
+  askPlaceholder: string;
+  getHelp: string;
+  orTopic: string;
+  yourState: string;
+  exampleTag: string;
+  previewNote: string;
   heroLine1: string;
   heroLine2: string;
   lede: string;
@@ -51,6 +58,13 @@ type Strings = {
 export const T: Record<Lang, Strings> = {
   en: {
     tagline: "Free legal help in simple words",
+    askLabel: "What happened?",
+    askPlaceholder: "For example: I bought a laptop that was broken, and the shop is refusing a refund…",
+    getHelp: "Get help",
+    orTopic: "Or choose a topic",
+    yourState: "Your state",
+    exampleTag: "Example",
+    previewNote: "HaqSe writes letters like this from your answers. You download it as a PDF.",
     heroLine1: "Know your rights.",
     heroLine2: "Take the next step.",
     lede: "Tell HaqSe what happened, in your own words. It explains what the law says, what to do next, and writes the letter for you. No lawyer fees.",
@@ -122,6 +136,13 @@ export const T: Record<Lang, Strings> = {
 
   te: {
     tagline: "సరళమైన మాటల్లో ఉచిత న్యాయ సహాయం",
+    askLabel: "ఏం జరిగింది?",
+    askPlaceholder: "ఉదాహరణకు: నేను కొన్న ల్యాప్‌టాప్ పాడైంది, షాపువాళ్లు రీఫండ్ ఇవ్వడం లేదు…",
+    getHelp: "సహాయం పొందండి",
+    orTopic: "లేదా ఒక అంశాన్ని ఎంచుకోండి",
+    yourState: "మీ రాష్ట్రం",
+    exampleTag: "ఉదాహరణ",
+    previewNote: "మీ జవాబులతో HaqSe ఇలాంటి లేఖలు రాస్తుంది. మీరు దాన్ని PDF గా డౌన్‌లోడ్ చేసుకోవచ్చు.",
     heroLine1: "మీ హక్కులు తెలుసుకోండి.",
     heroLine2: "తదుపరి అడుగు వేయండి.",
     lede: "ఏం జరిగిందో మీ మాటల్లోనే HaqSe కి చెప్పండి. చట్టం ఏమంటుందో, తర్వాత ఏం చేయాలో వివరిస్తుంది, మీ కోసం లేఖ కూడా రాస్తుంది. లాయర్ ఫీజు అవసరం లేదు.",
@@ -193,6 +214,13 @@ export const T: Record<Lang, Strings> = {
 
   hi: {
     tagline: "आसान शब्दों में मुफ़्त कानूनी मदद",
+    askLabel: "क्या हुआ?",
+    askPlaceholder: "जैसे: मैंने जो लैपटॉप खरीदा वह खराब निकला, और दुकान रिफ़ंड नहीं दे रही…",
+    getHelp: "मदद पाइए",
+    orTopic: "या एक विषय चुनिए",
+    yourState: "आपका राज्य",
+    exampleTag: "उदाहरण",
+    previewNote: "आपके जवाबों से HaqSe ऐसे पत्र लिखता है। आप इसे PDF में डाउनलोड कर सकते हैं।",
     heroLine1: "अपने अधिकार जानिए।",
     heroLine2: "अगला कदम उठाइए।",
     lede: "जो हुआ, अपने शब्दों में HaqSe को बताइए। यह बताता है कि कानून क्या कहता है, आगे क्या करना है, और आपके लिए पत्र भी लिखता है। वकील की फ़ीस नहीं।",
