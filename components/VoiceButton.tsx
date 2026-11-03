@@ -7,7 +7,17 @@ import { useEffect, useState } from "react";
 
 const SPEECH_LANG: Record<string, string> = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
 
-export default function VoiceButton({ lang, onText }: { lang: string; onText: (t: string) => void }) {
+export default function VoiceButton({
+  lang,
+  onText,
+  label = "Speak instead of typing",
+  listeningLabel = "Listening…",
+}: {
+  lang: string;
+  onText: (t: string) => void;
+  label?: string;
+  listeningLabel?: string;
+}) {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
 
@@ -37,8 +47,8 @@ export default function VoiceButton({ lang, onText }: { lang: string; onText: (t
       type="button"
       className={`mic ${listening ? "on" : ""}`}
       onClick={start}
-      aria-label={listening ? "Listening" : "Speak instead of typing"}
-      title={listening ? "Listening…" : "Speak"}
+      aria-label={listening ? listeningLabel : label}
+      title={listening ? listeningLabel : label}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="9" y="3" width="6" height="11" rx="3" />

@@ -24,21 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>
-        <header className="topbar">
-          <a href="/" className="wordmark" aria-label="HaqSe home">
-            HaqSe
-          </a>
-          <span className="topbar-note">Free legal help in simple words</span>
-        </header>
-        <main>{children}</main>
-        <footer className="footer">
-          <p>
-            HaqSe gives general legal information, not legal advice. For serious cases, your District Legal Services
-            Authority (DLSA) gives free legal aid. In danger? Call <a href="tel:112">112</a>.
-          </p>
-        </footer>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -13,7 +13,7 @@
 - [ ] Review all legal content with a lawyer or law student
 - [ ] Verify Telangana and Andhra Pradesh state details
 - [ ] Telugu / Hindi font support in PDFs (add a Noto Sans font to jsPDF)
-- [ ] Translate the app's buttons and labels into Telugu and Hindi
+- [x] Translate the app's buttons and labels into Telugu and Hindi (lib/i18n.ts - native speakers please review)
 - [ ] Deploy on Vercel
 
 ## Version 2
